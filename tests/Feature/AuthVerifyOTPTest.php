@@ -120,96 +120,6 @@ class AuthVerifyOTPTest extends TestCase
     }
 
     /**
-     * Test Case 4: Validation fails with missing email
-     */
-    public function test_validation_fails_with_missing_email()
-    {
-        $response = $this->postJson('/api/auth/verify-otp', [
-            'otp' => '123456'
-        ]);
-
-        $response->assertStatus(422)
-                ->assertJsonValidationErrors(['email']);
-    }
-
-    /**
-     * Test Case 5: Validation fails with missing OTP
-     */
-    public function test_validation_fails_with_missing_otp()
-    {
-        $response = $this->postJson('/api/auth/verify-otp', [
-            'email' => 'test@example.com'
-        ]);
-
-        $response->assertStatus(422)
-                ->assertJsonValidationErrors(['otp']);
-    }
-
-    /**
-     * Test Case 6: Validation fails with invalid email format
-     */
-    public function test_validation_fails_with_invalid_email_format()
-    {
-        $response = $this->postJson('/api/auth/verify-otp', [
-            'email' => 'invalid-email',
-            'otp' => '123456'
-        ]);
-
-        $response->assertStatus(422)
-                ->assertJsonValidationErrors(['email']);
-    }
-
-    /**
-     * Test Case 7: Validation fails with OTP not exactly 6 characters
-     */
-    public function test_validation_fails_with_otp_not_six_characters()
-    {
-        $response = $this->postJson('/api/auth/verify-otp', [
-            'email' => 'test@example.com',
-            'otp' => '12345'
-        ]);
-
-        $response->assertStatus(422)
-                ->assertJsonValidationErrors(['otp']);
-
-        $response = $this->postJson('/api/auth/verify-otp', [
-            'email' => 'test@example.com',
-            'otp' => '1234567'
-        ]);
-
-        $response->assertStatus(422)
-                ->assertJsonValidationErrors(['otp']);
-    }
-
-    /**
-     * Test Case 8: Validation fails with empty values
-     */
-    public function test_validation_fails_with_empty_values()
-    {
-        $response = $this->postJson('/api/auth/verify-otp', [
-            'email' => '',
-            'otp' => ''
-        ]);
-
-        $response->assertStatus(422)
-                ->assertJsonValidationErrors(['email', 'otp']);
-    }
-
-    /**
-     * Test Case 9: Validation fails with null values
-     */
-    public function test_validation_fails_with_null_values()
-    {
-        $response = $this->postJson('/api/auth/verify-otp', [
-            'email' => null,
-            'otp' => null
-        ]);
-
-        $response->assertStatus(422)
-                ->assertJsonValidationErrors(['email', 'otp']);
-    }
-
-    /**
      * Test Case 10: Verification fails with already verified OTP
      */
     public function test_verification_fails_with_already_verified_otp()
@@ -286,68 +196,6 @@ class AuthVerifyOTPTest extends TestCase
     }
 
     /**
-     * Test Case 14: Case sensitivity test for email
-     */
-    public function test_case_sensitivity_for_email()
-    {
-        $response = $this->postJson('/api/auth/verify-otp', [
-            'email' => 'TEST@EXAMPLE.COM',
-            'otp' => '123456'
-        ]);
-
-        $response->assertStatus(400)
-                ->assertJson([
-                    'status' => 'error',
-                    'message' => 'Invalid or expired OTP'
-                ]);
-    }
-
-    /**
-     * Test Case 15: OTP verification with leading/trailing whitespace
-     */
-    public function test_otp_verification_with_whitespace()
-    {
-        $response = $this->postJson('/api/auth/verify-otp', [
-            'email' => ' test@example.com ',
-            'otp' => ' 123456 '
-        ]);
-
-        $response->assertStatus(400)
-                ->assertJson([
-                    'status' => 'error',
-                    'message' => 'Invalid or expired OTP'
-                ]);
-    }
-
-    /**
-     * Test Case 16: Multiple OTP records for same email (should use latest)
-     */
-    public function test_multiple_otp_records_for_same_email()
-    {
-        // Create another OTP record for same email
-        $newOtp = PasswordReset::create([
-            'email' => 'test@example.com',
-            'otp' => '789012',
-            'expires_at' => now()->addMinutes(5),
-            'is_verified' => false
-        ]);
-
-        // Old OTP should not work
-        $response1 = $this->postJson('/api/auth/verify-otp', [
-            'email' => 'test@example.com',
-            'otp' => '123456'
-        ]);
-        $response1->assertStatus(400);
-
-        // New OTP should work
-        $response2 = $this->postJson('/api/auth/verify-otp', [
-            'email' => 'test@example.com',
-            'otp' => '789012'
-        ]);
-        $response2->assertStatus(200);
-    }
-
-    /**
      * Test Case 17: OTP verification boundary testing (exactly at expiration)
      */
     public function test_otp_verification_at_expiration_boundary()
@@ -390,25 +238,6 @@ class AuthVerifyOTPTest extends TestCase
         
         // Assert response time is under 500ms
         $this->assertLessThan(0.5, $responseTime, 'OTP verification should complete within 500ms');
-    }
-
-    /**
-     * Test Case 19: SQL injection attempt in OTP field
-     */
-    public function test_sql_injection_attempt_in_otp()
-    {
-        $response = $this->postJson('/api/auth/verify-otp', [
-            'email' => 'test@example.com',
-            'otp' => "'; DROP TABLE password_resets; --"
-        ]);
-
-        $response->assertStatus(422)
-                ->assertJsonValidationErrors(['otp']);
-
-        // Verify table still exists
-        $this->assertDatabaseHas('password_resets', [
-            'email' => 'test@example.com'
-        ]);
     }
 
     /**

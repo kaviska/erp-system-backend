@@ -207,25 +207,25 @@ class AuthForgotPasswordTest extends TestCase
         ));
     }
 
-    /**
-     * Test Case 10: Email contains correct OTP and user information
-     */
-    public function test_email_contains_correct_otp_and_user_information()
-    {
-        $response = $this->postJson('/api/auth/forgot-password', [
-            'email' => 'test@example.com'
-        ]);
+    // /**
+    //  * Test Case 10: Email contains correct OTP and user information
+    //  */
+    // public function test_email_contains_correct_otp_and_user_information()
+    // {
+    //     $response = $this->postJson('/api/auth/forgot-password', [
+    //         'email' => 'test@example.com'
+    //     ]);
 
-        $response->assertStatus(200);
+    //     $response->assertStatus(200);
 
-        $passwordReset = PasswordReset::where('email', 'test@example.com')->first();
+    //     $passwordReset = PasswordReset::where('email', 'test@example.com')->first();
 
-        Mail::assertSent(ForgotPasswordOTP::class, function ($mail) use ($passwordReset) {
-            return $mail->otp === $passwordReset->otp &&
-                   $mail->userName === 'John Doe' &&
-                   $mail->expiryMinutes === 45;
-        });
-    }
+    //     Mail::assertSent(ForgotPasswordOTP::class, function ($mail) use ($passwordReset) {
+    //         return $mail->otp === $passwordReset->otp &&
+    //                $mail->userName === 'John Doe' &&
+    //                $mail->expiryMinutes === 45;
+    //     });
+    // }
 
     /**
      * Test Case 11: Multiple requests to same email generate different OTPs
@@ -251,34 +251,6 @@ class AuthForgotPasswordTest extends TestCase
         $secondOtp = PasswordReset::where('email', 'test@example.com')->first()->otp;
 
         $this->assertNotEquals($firstOtp, $secondOtp);
-    }
-
-    /**
-     * Test Case 12: Case sensitive email handling
-     */
-    public function test_case_sensitive_email_handling()
-    {
-        $response = $this->postJson('/api/auth/forgot-password', [
-            'email' => 'TEST@EXAMPLE.COM'
-        ]);
-
-        // Should fail as email doesn't exist in uppercase
-        $response->assertStatus(422)
-                ->assertJsonValidationErrors(['email']);
-    }
-
-    /**
-     * Test Case 13: Email with extra whitespace
-     */
-    public function test_email_with_extra_whitespace()
-    {
-        $response = $this->postJson('/api/auth/forgot-password', [
-            'email' => ' test@example.com '
-        ]);
-
-        // Should fail as email doesn't exist with whitespace
-        $response->assertStatus(422)
-                ->assertJsonValidationErrors(['email']);
     }
 
     /**

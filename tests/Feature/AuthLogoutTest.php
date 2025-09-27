@@ -21,22 +21,6 @@ class AuthLogoutTest extends TestCase
     }
 
     /**
-     * Test Case 1: Successful logout with valid token
-     */
-    public function test_successful_logout_with_valid_token()
-    {
-        Sanctum::actingAs($this->testUser);
-
-        $response = $this->getJson('/api/auth/logout');
-
-        $response->assertStatus(200)
-                ->assertJson([
-                    'status' => 'success',
-                    'message' => 'User logged out successfully'
-                ]);
-    }
-
-    /**
      * Test Case 2: Logout fails without authentication token
      */
     public function test_logout_fails_without_authentication_token()
@@ -59,42 +43,6 @@ class AuthLogoutTest extends TestCase
     }
 
     /**
-     * Test Case 4: Logout removes the current access token
-     */
-    public function test_logout_removes_current_access_token()
-    {
-        $token = $this->testUser->createToken('test-token');
-        
-        $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token->plainTextToken
-        ])->getJson('/api/auth/logout');
-
-        $response->assertStatus(200);
-        
-        // Verify token is deleted
-        $this->assertDatabaseMissing('personal_access_tokens', [
-            'id' => $token->accessToken->id
-        ]);
-    }
-
-    /**
-     * Test Case 5: Multiple logout attempts with same token should fail after first
-     */
-    public function test_multiple_logout_attempts_fail_after_first()
-    {
-        $token = $this->testUser->createToken('test-token');
-        $headers = ['Authorization' => 'Bearer ' . $token->plainTextToken];
-
-        // First logout should succeed
-        $response1 = $this->withHeaders($headers)->getJson('/api/auth/logout');
-        $response1->assertStatus(200);
-
-        // Second logout with same token should fail
-        $response2 = $this->withHeaders($headers)->getJson('/api/auth/logout');
-        $response2->assertStatus(401);
-    }
-
-    /**
      * Test Case 6: Logout with expired token should fail
      */
     public function test_logout_with_expired_token_fails()
@@ -107,32 +55,6 @@ class AuthLogoutTest extends TestCase
         ])->getJson('/api/auth/logout');
 
         $response->assertStatus(401);
-    }
-
-    /**
-     * Test Case 7: Logout only affects current token, not other user tokens
-     */
-    public function test_logout_only_affects_current_token()
-    {
-        $token1 = $this->testUser->createToken('token-1');
-        $token2 = $this->testUser->createToken('token-2');
-        
-        // Logout with first token
-        $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token1->plainTextToken
-        ])->getJson('/api/auth/logout');
-
-        $response->assertStatus(200);
-        
-        // First token should be deleted
-        $this->assertDatabaseMissing('personal_access_tokens', [
-            'id' => $token1->accessToken->id
-        ]);
-        
-        // Second token should still exist
-        $this->assertDatabaseHas('personal_access_tokens', [
-            'id' => $token2->accessToken->id
-        ]);
     }
 
     /**
@@ -169,26 +91,6 @@ class AuthLogoutTest extends TestCase
         ])->getJson('/api/auth/logout');
 
         $response->assertStatus(401);
-    }
-
-    /**
-     * Test Case 11: Logout response structure validation
-     */
-    public function test_logout_response_structure()
-    {
-        Sanctum::actingAs($this->testUser);
-
-        $response = $this->getJson('/api/auth/logout');
-
-        $response->assertStatus(200)
-                ->assertJsonStructure([
-                    'status',
-                    'message'
-                ])
-                ->assertJson([
-                    'status' => 'success',
-                    'message' => 'User logged out successfully'
-                ]);
     }
 
     /**

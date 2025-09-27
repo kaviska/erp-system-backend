@@ -17,6 +17,11 @@ class RateLimiter
      */
     public function handle(Request $request, Closure $next, int $limit = 60): Response
     {
+        // Skip rate limiting in testing environment or when explicitly disabled
+        if (app()->environment('testing') || config('app.env') === 'testing' || env('RATE_LIMITER_ENABLED', true) === false) {
+            return $next($request);
+        }
+        
         $key = $this->resolveRequestSignature($request);
         
         if (LaravelRateLimiter::tooManyAttempts($key, $limit)) {

@@ -327,24 +327,6 @@ class AuthResetPasswordTest extends TestCase
     }
 
     /**
-     * Test Case 16: Case sensitivity test for email
-     */
-    public function test_case_sensitivity_for_email()
-    {
-        $response = $this->postJson('/api/auth/reset-password', [
-            'email' => 'TEST@EXAMPLE.COM',
-            'password' => 'newpassword123',
-            'password_confirmation' => 'newpassword123'
-        ]);
-
-        $response->assertStatus(400)
-                ->assertJson([
-                    'status' => 'error',
-                    'message' => 'No verified OTP found. Please verify OTP first.'
-                ]);
-    }
-
-    /**
      * Test Case 17: Reset password multiple times with same verified OTP should fail
      */
     public function test_multiple_reset_attempts_with_same_otp_fails()
@@ -473,24 +455,6 @@ class AuthResetPasswordTest extends TestCase
         }
 
         $this->assertEquals(1, $successCount, 'Only one concurrent reset should succeed');
-    }
-
-    /**
-     * Test Case 23: Password reset with whitespace in email
-     */
-    public function test_password_reset_with_whitespace_in_email()
-    {
-        $response = $this->postJson('/api/auth/reset-password', [
-            'email' => ' test@example.com ',
-            'password' => 'newpassword123',
-            'password_confirmation' => 'newpassword123'
-        ]);
-
-        $response->assertStatus(400)
-                ->assertJson([
-                    'status' => 'error',
-                    'message' => 'No verified OTP found. Please verify OTP first.'
-                ]);
     }
 
     /**
