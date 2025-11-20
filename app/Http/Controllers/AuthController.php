@@ -236,8 +236,8 @@ class AuthController extends Controller
             ]);
             // Find valid reset record
             $passwordReset = PasswordReset::findValidReset(
-                trim($request->email),
-                trim($request->otp)
+               $request->email,
+                $request->otp
             );
 
             if (!$passwordReset) {

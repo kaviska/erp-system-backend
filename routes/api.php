@@ -31,8 +31,12 @@ Route::group(['prefix'=>'permission','middleware'=>['token.validate']],function(
     Route::post('create-role',[PermissionManger::class,'createRole']);
     Route::post('assign-permission-to-role',[PermissionManger::class,'assignPermissionToRole']);
     Route::get('get-role-with-permissions',[PermissionManger::class,'getRoleWithPermissions']);
+    Route::delete('roles/{id}', [PermissionManger::class, 'delete']);
+    Route::put('roles', [PermissionManger::class, 'update']);
 });
 
 Route::group(['prefix'=>'users','middleware'=>['token.validate','rate.limit:10']],function(){
     Route::get('',[UserController::class,'index']);
+    Route::delete('{id}',[UserController::class,'delete']);
+    Route::put('',[UserController::class,'update']);
 });

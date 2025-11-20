@@ -16,12 +16,21 @@ class PermissionManger extends Controller
             //validate request
             $request->validate([
                 'name' => 'required|string|unique:roles,name',
+                 'permissions' => 'required|array',
+                'permissions.*' => 'string',
 
             ]);
 
             //create role
             $role = Role::create(['name' => $request->name]);
+             foreach ($request->permissions as $permission) {
+                Permission::firstOrCreate(['name' => $permission]);
+            }
+
+            //assign permissions to role
+            $role->givePermissionTo($request->permissions);
             return Response::success($role, 'Role created successfully', 201);
+
         } catch (\Throwable $th) {
             return Response::error($th->getMessage(), 'Something went wrong', 500);
         }
@@ -66,6 +75,42 @@ class PermissionManger extends Controller
             }
             $roles = Role::with('permissions')->get();
             return Response::success($roles, 'Roles with permissions fetched successfully', 200);
+        } catch (\Throwable $th) {
+            return Response::error($th->getMessage(), 'Something went wrong', 500);
+        }
+    }
+
+    public function update(Request $request){
+        try {
+            //code...
+            $request->validate([
+                'id' => 'required|integer|exists:roles,id',
+                'name' => 'required|string|unique:roles,name,'.$request->id,
+                'permissions' => 'required|array',
+                'permissions.*' => 'string',
+            ]);
+            $role = Role::findById($request->id);
+            $role->name = $request->name;
+            foreach ($request->permissions as $permission) {
+                Permission::firstOrCreate(['name' => $permission]);
+            }
+            $role->syncPermissions($request->permissions);
+            $role->save();
+            return Response::success($role, 'Role updated successfully', 200);
+        } catch (\Throwable $th) {
+            //throw $th;
+            return Response::error($th->getMessage(), 'Something went wrong', 500);
+        }
+    }
+
+    public function delete($id){
+        try {
+            $role = Role::findById($id);
+            if(!$role){
+                return Response::error('', 'Role not found', 404);
+            }
+            $role->delete();
+            return Response::success('', 'Role deleted successfully', 200);
         } catch (\Throwable $th) {
             return Response::error($th->getMessage(), 'Something went wrong', 500);
         }
